@@ -1,109 +1,120 @@
-import re
-
-#NOTE: POSSIBLE POSITIONS OF EACH BLOCK
-# We have a table and a number of blocks.A block can be ontop of the table (ontable A)
-# OR it can be ontop of another block (on A B).
-#NOTE: Blocks form a STACK of N blocks, where N is the number of blocks given in the problem.
-# When a BLOCK has no block ontop of it we declare its clear property true otherwise false.
-# NOTE: POSSIBLE MOVING OF BLOCKS.
-#  RESTRICTIONS (1) we can move one block at a time, (2) The moving block should have a clear property value of true.
-#  (3) The destination of the moving block should either be (A) the table OR (B) a block with a clear property of true.
-#NOTE: Moves function-method description
-# The moving procedure is a method that takes 3 arguments (1) The moving block, (2) The original position
-# (3) The new position of the moving block
-#NOTE: INSTANCE OF THE INPUT.TXT FILE:
-# (define (problem BLOCKS-4-0)
-# (:domain BLOCKS)
-# (:objects D B A C )
-# (:INIT (CLEAR C) (CLEAR A) (CLEAR B) (CLEAR D) (ONTABLE C) (ONTABLE A) (ONTABLE
-# B) (ONTABLE D) (HANDEMPTY))
-# (:goal (AND (ON D C) (ON C B) (ON B A))) )
-#NOTE: OUTPUT FORM: Restrain the time of execution to 60 secs, display the time of execution and the moves made.
+import os
+import utils
+import time
+import sys
+from node import TreeNode
 
 
-#TODO:Write a program that finds the best route to reach the given solution state.
-# Read the input file and Write the solution to the output file
-#TODO GENERAL
-#TODO Read the INPUT.TXT File
-alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+def search(queue, method, initial, goal):
+    """Searches the tree for a solution based on a search algorithm."""
+    root = TreeNode(initial, None, None, 0, 0, 0)
+    if method == 'astar' or method == 'best':
+        queue.put((0, root))
+    else:
+        queue.put(root)
 
-with open('input.txt', "r") as inputFile:
-    lines = inputFile.readlines()
+    explored_set = set()  #Set of explored states.
+    start = time.time()
+    while (not queue.empty()) and (time.time() - start <= 60):
+        #While the queue is not empty and the time limit hasn't expired.
 
-#The lines of the file from 2 to 5
-useful_lines = lines[2:5]
-print(useful_lines)
+        if method == "astar" or method == "best":
+            #PriorityQueue .get() method returns the priority number and the element
+            curr_f, current = queue.get()
+        else:
+            current = queue.get()
 
-# Processing the file input,while creating a dictionary that includes
-# 3 keys : 1) blocks 2) clear 3) ontable 4) on 5) goal
-#The 1. Indicates how many blocks are being used and what's their name
-#The 2. Indicates how many of them will have a property of clear true
-#The 3. Indicates how many of the blocks will have a property of ontable true
-#The 4. Indicates which blocks are on top of each other for instance: on A B means that A is on top of B
-#The 5. Indicates which is the end state goal, it contains on pairs
-dictionary_formatted_input = {}
+        if current.is_goal(goal):
+            return current
 
-for line in useful_lines:
-    if "objects" in line:
-        current_list = [char for char in line if char in alphabet]
-        dictionary_formatted_input["blocks"] = current_list
-    if "INIT" in line:
-        clear_letters = re.findall(r'\(CLEAR (\w)\)', line)
-        ontable_letters = re.findall(r'\(ONTABLE (\w)\)', line)
-        on_letters = re.findall(r'\(ON (\w) (\w)\)', line)
-        dictionary_formatted_input["clear"] = clear_letters
-        dictionary_formatted_input["ontable"] = ontable_letters
-        dictionary_formatted_input["on"] = on_letters
-    if "goal" in line:
-        on_letters = re.findall(r'\(ON (\w) (\w)\)', line)
-        dictionary_formatted_input["goal"] = on_letters
+        if str(current.state) in explored_set:
+            continue
 
-for block in dictionary_formatted_input["blocks"]:
-    print("BLOCKS :", block)
-for clear_block in dictionary_formatted_input["clear"]:
-    print("CLEAR BLOCKS:", clear_block)
-for ontable_block in dictionary_formatted_input["ontable"]:
-    print("ONTABLE BLOCKS:", ontable_block)
-for on_block in dictionary_formatted_input["on"]:
-    print("ON BLOCKS:", on_block, type(on_block))
-for goal_block in dictionary_formatted_input["goal"]:
-    print("GOAL BLOCKS:", goal_block, type(goal_block))
+        current.find_children(method, goal)
+        explored_set.add(str(current.state))
 
-#TODO: INITIAL STATE CONTAINS THE ENVIROMENT IN THIS OCCASION IS THE TABLE WHICH IS A SET OF STACKS
-#I will create a list of lists to represent the set of stacks (TABLE)
-table = []
+        for child in current.children:
+            if method == "depth" or method == "breadth":
+                queue.put(child)
+            elif method == "astar" or method == "best":
+                queue.put((child.f, child))
+
+    return None
 
 
-def create_initial_state(table, dictionary_formatted_input):
-    for ontable_block in dictionary_formatted_input["ontable"]:
-        list = [ontable_block]
-        table.append(list)
-    for on_block in reversed(dictionary_formatted_input["on"]):
-        first_letter = on_block[0]
-        second_letter = on_block[1]
-        print(f"FIRST LETTER: {first_letter}", f"SECOND LETTER: {second_letter}")
-        for stack in table:
-            print(f"STACK : {stack}")
-            if second_letter in stack:
-                print("INSIDE THE IF THE STACK")
-                stack.append(first_letter)
+def main():
+    start = time.time()  # Start time.
+    os.system('cls' if os.name == 'nt' else 'clear')  #Clear terminal
+
+    #Handles the arguments.
+    if len(sys.argv) == 3:
+        # If the arguments are 3 output file name wasn't specified
+        method = sys.argv[1]
+        input_file = sys.argv[2]
+    elif len(sys.argv) == 4:
+        # If the arguments are 4 THE output file name was specified
+        method = sys.argv[1]
+        input_file = sys.argv[2]
+        output_file = sys.argv[3]
+    else:
+        print(
+            f'How to use: {sys.argv[0]} <search algorithm> <problem file name> <solution file name>'
+        )
+        print('- search algorithms: depth (Depth First), breadth (Breadth First), best (Best First), astar (A*)')
+        sys.exit()
+
+        #Initiliazes the data structure of the que base on the search method.
+    search_queue = utils.METHODS[method]
+
+    #Parse the input file and get the blocks, initial state, goal state.
+    data = utils.load_problem_file(input_file)
+    blocks = utils.get_blocks_from_file(data)
+    initial_state = utils.get_initial_state(data)
+    goal_state = utils.get_goal_state(data)
+
+    print('OBJECTS:', blocks)
+
+    print('\n#################### INITIAL STATE ####################\n')
+    print(initial_state)
+    i_blocks = utils.initialize_blocks(blocks, initial_state)
+
+    print('\n#################### GOAL STATE ####################\n')
+    print(goal_state)
+    g_blocks = utils.initialize_blocks(blocks, goal_state)
+
+    solution_node = search(search_queue, method, i_blocks, g_blocks)
+
+    if solution_node is not None:
+        # If a solution is found.
+        print('\n#################### SOLUTION ####################\n')
+        solution_node.print_state()
+        print(f'Number of moves: {solution_node.g}')
+
+        # Calculates the time it took to find the solution.
+        print('Took: ', time.time() - start)
+
+        solution_path = solution_node.get_moves_to_solution()
+
+        if len(sys.argv) == 3:
+            # If the output file name was not specified.
+            try:
+                # Handling the paths with forward-slashes and back-slashes.
+                file_name = input_file.split('\\')[-1]
+                output_file = './solutions/' + method + '-' + file_name
+                utils.write_solution(output_file, solution_path)
+            except FileNotFoundError:
+                file_name = input_file.split('/')[-1]
+                output_file = './solutions/' + method + '-' + file_name
+                utils.write_solution(output_file, solution_path)
+        else:
+            # If the output file name is specified.
+            utils.write_solution(output_file, solution_path)
+
+    else:
+        print('Time taken: ', time.time() - start)
+        print('############ ONE MINUTE PASSED AND NO SOLUTION WAS FOUND ############')
+        sys.exit()
 
 
-create_initial_state(table, dictionary_formatted_input)
-
-print(f"TABLE {table}")
-
-#TODO Process The INPUT.TXT File content
-#TODO Store The Initial state
-#TODO Store The Goal State - Solution
-
-
-#TODO Create Classes Describing the objects
-#TODO Create a class of BLOCKS
-#TODO Add the corresponding properties and methods
-#TODO Create a class of Table
-#TODO Add the corresponding properties and methods
-
-
-#TODO Create global used functions
-#TODO Create Constants implying rigid values
+if __name__ == '__main__':
+    main()
