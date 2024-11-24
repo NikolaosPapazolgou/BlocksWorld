@@ -1,4 +1,4 @@
-# Artificient Intelligence - Blocks World Problem
+# Artificial Intelligence - Blocks World Problem
 
 An AI that solves the Blocks World Problem with informed and uniformed searching algorithms.
 ## Searching Algorithms:

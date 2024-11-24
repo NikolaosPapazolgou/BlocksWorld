@@ -35,7 +35,6 @@ class TreeNode(object):
 
     def find_possible_moves(self):
         """Finds and returns the possible moves in the current state."""
-
         # Initialize a dictionary with the clear blocks.
         clear_blocks = {key: value for key,
         value in self.state.items() if value['CLEAR']}
@@ -45,21 +44,21 @@ class TreeNode(object):
             # For every clear block.
             if value['ON'] != -1:
                 # Move a clear Block on table.
-                on = value['ON']
-                temp_state = self.clear_on_table(block, on)
+                below_block = value['ON']
+                temp_state = self.clear_on_table(block, below_block)
                 moves.append(temp_state)
 
-                for block_ in clear_blocks:
-                    if block != block_:
+                for clear_block in clear_blocks:
+                    if block != clear_block:
                         # Move a clear Block on a clear Block.
-                        temp_state = self.clear_on_clear(block, block_)
+                        temp_state = self.clear_on_clear(block, clear_block)
                         moves.append(temp_state)
 
             elif value['ONTABLE']:
-                # Move a Block on table on a clear Block.
-                for block_ in clear_blocks:
-                    if block != block_:
-                        temp_state = self.table_on_clear(block, block_)
+                # Move a Block from the table on a clear Block.
+                for clear_block in clear_blocks:
+                    if block != clear_block:
+                        temp_state = self.table_on_clear(block, clear_block)
                         moves.append(temp_state)
 
         del clear_blocks
@@ -79,17 +78,17 @@ class TreeNode(object):
 
         return copy_blocks, move
 
-    def table_on_clear(self, block, block_):
+    def table_on_clear(self, ontable_block, clear_block):
         """Moves a block that is on table on a clear block."""
-
+        copy_blocks = {}
         # A copy of the current state.
         copy_blocks = {key: self.state[key].copy() for key in self.state}
 
-        copy_blocks[block]['ONTABLE'] = False
-        copy_blocks[block]['ON'] = block_
-        copy_blocks[block_]['UNDER'] = block
-        copy_blocks[block_]['CLEAR'] = False
-        move = (block, 'table', block_)
+        copy_blocks[ontable_block]['ONTABLE'] = False
+        copy_blocks[ontable_block]['ON'] = clear_block
+        copy_blocks[clear_block]['UNDER'] = ontable_block
+        copy_blocks[clear_block]['CLEAR'] = False
+        move = (ontable_block, 'table', clear_block)
 
         return copy_blocks, move
 

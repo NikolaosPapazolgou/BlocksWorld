@@ -44,7 +44,7 @@ def search(queue, method, initial, goal):
 
 def main():
     start = time.time()  # Start time.
-    os.system('cls' if os.name == 'nt' else 'clear')  #Clear terminal
+    os.system('cls' if os.name == 'nt' else 'clear')  # Clear terminal
 
     #Handles the arguments.
     if len(sys.argv) == 3:
@@ -72,13 +72,13 @@ def main():
     initial_state = utils.get_initial_state(data)
     goal_state = utils.get_goal_state(data)
 
-    print('OBJECTS:', blocks)
+    print('BLOCKS:', blocks)
 
-    print('\n#################### INITIAL STATE ####################\n')
+    print('\n################## INITIAL STATE ##################\n')
     print(initial_state)
     i_blocks = utils.initialize_blocks(blocks, initial_state)
 
-    print('\n#################### GOAL STATE ####################\n')
+    print('\n################## GOAL STATE ##################\n')
     print(goal_state)
     g_blocks = utils.initialize_blocks(blocks, goal_state)
 
@@ -86,7 +86,7 @@ def main():
 
     if solution_node is not None:
         # If a solution is found.
-        print('\n#################### SOLUTION ####################\n')
+        print('\n################## SOLUTION ##################\n')
         solution_node.print_state()
         print(f'Number of moves: {solution_node.g}')
 
